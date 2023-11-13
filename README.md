@@ -6,6 +6,9 @@
 
 See [PNPM installation](https://pnpm.io/installation)
 
+Install all NPM packages:
+`$ pnpm install`
+
 ---
 
 ## Install Rust
@@ -56,19 +59,6 @@ JSON RPC URL: http://127.0.0.1:8899
 press control + c
 
 `Note. YOU MUST SHUT DOWN any Solana local network for Anchor to run its own Solana local network as part of testing!`
-
----
-
-## Install Yarn
-
-Yarn is recommended by Anchor for JavaScript package management. Anchor uses Yarn as its default package management tool.
-
-```
-$ pnpm install -g yarn
-$ yarn -v
-```
-
-confirm the installed yarn version is 1.22.19
 
 ---
 
