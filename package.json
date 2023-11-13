@@ -1,19 +1,48 @@
 {
-    "scripts": {
-        "lint:fix": "prettier */*.js \"*/**/*{.js,.ts}\" -w",
-        "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check"
-    },
-    "dependencies": {
-        "@coral-xyz/anchor": "^0.29.0"
-    },
-    "devDependencies": {
-        "chai": "^4.3.4",
-        "mocha": "^9.0.3",
-        "ts-mocha": "^10.0.0",
-        "@types/bn.js": "^5.1.0",
-        "@types/chai": "^4.3.0",
-        "@types/mocha": "^9.0.0",
-        "typescript": "^4.3.5",
-        "prettier": "^2.6.2"
-    }
+  "name": "solana-anchor-demo3",
+  "version": "0.0.1",
+  "description": "solana anchor demo3",
+  "author": "",
+  "license": "MIT",
+  "scripts": {
+    "clean": "rm -rf ~/.cache/solana/*",
+    "clear": "rm -rf .anchor target node_modules",
+    "build": "anchor build",
+    "test": "anchor test",
+    "testslv": "anchor test --skip-local-validator",
+    "test1c": "anchor test-crunchyVsSmooth",
+    "validator": "solana-test-validator",
+    "validator2": "solana-test-validator --reset",
+    "copyidl": "cp ./target/idl/abc.json ./app/src/idl.json",
+    "log1": "less abc/.anchor/program-logs/*.abc.log",
+    "network": "solana config get",
+    "local": "solana config set --url localhost",
+    "dev": "solana config set --url devnet",
+    "addr": "solana address",
+    "balance": "solana balance",
+    "airdrop": "solana airdrop 10",
+    "log": "solana logs",
+    "deploylocal": "anchor deploy",
+    "deploydev": "solana config set --url https://api.devnet.solana.com && anchor deploy --provider.cluster devnet",
+    "deploymain": "solana config set --url https://api.mainnet-beta.solana.com && anchor deploy --provider.cluster mainnet",
+    "build:program-rust": "cargo build-bpf --manifest-path=./src/program-rust/Cargo.toml --bpf-out-dir=dist/program",
+    "pgid": "solana address -k target/deploy/abc-keypair.json",
+    "pgid2": "solana address -k target/deploy/crunchy_vs_smooth-keypair.json",
+    "cleancargo": "cargo clean --manifest-path=./src/program-rust/Cargo.toml && rm -rf ./dist",
+    "lint:fix": "prettier */*.js \"*/**/*{.js,.ts}\" -w",
+    "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check"
+  },
+  "dependencies": {
+      "@coral-xyz/anchor": "^0.29.0"
+  },
+  "devDependencies": {
+      "chai": "^4.3.4",
+      "mocha": "^9.0.3",
+      "ts-mocha": "^10.0.0",
+      "@types/bn.js": "^5.1.0",
+      "@types/chai": "^4.3.0",
+      "@types/mocha": "^9.0.0",
+      "typescript": "^4.3.5",
+      "prettier": "^2.6.2"
+  }
 }
