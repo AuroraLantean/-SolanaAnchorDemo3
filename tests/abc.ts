@@ -25,10 +25,10 @@ describe("abc", () => {
     // Make the new account and initialize it with the program.
     // #region code-simplified
     const tx = await program.methods
-      .initialize(bn(1234), auth)
+      .initialize(bn(1234))
       .accounts({
         myAccount: myAccount.publicKey,
-        user: auth,
+        authority: auth,
         systemProgram: SystemProgram.programId,
       })
       .signers([myAccount])
@@ -54,6 +54,7 @@ describe("abc", () => {
       .update(dataN1)
       .accounts({
         myAccount: myAccount.publicKey,
+        authority: auth,
       })
       .rpc();
     lg("step 105")
@@ -69,7 +70,7 @@ describe("abc", () => {
     await program.methods
       .increment()
       .accounts({
-        counter: myAccount.publicKey,
+        myAccount: myAccount.publicKey,
         authority: auth,
       })
       .rpc();
