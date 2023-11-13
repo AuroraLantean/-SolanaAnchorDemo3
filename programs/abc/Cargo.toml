@@ -1,7 +1,8 @@
 [package]
 name = "abc"
 version = "0.1.0"
-description = "Created with Anchor"
+description = ""
+rust-version = "1.68.0"
 edition = "2021"
 
 [lib]
@@ -10,9 +11,9 @@ name = "abc"
 
 [features]
 no-entrypoint = []
+cpi = ["no-entrypoint"]
 no-idl = []
 no-log-ix-name = []
-cpi = ["no-entrypoint"]
 default = []
 
 [dependencies]

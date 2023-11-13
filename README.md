@@ -6,8 +6,14 @@
 
 See [PNPM installation](https://pnpm.io/installation)
 
-Install all NPM packages:
+Then install all NPM packages:
 `$ pnpm install`
+
+---
+
+## Install BUN as a fast JavaScript runtime, and it can run TypeScript natively.
+
+See [BUN installation](https://bun.sh/docs/installation)
 
 ---
 
@@ -117,21 +123,24 @@ $ solana-keygen pubkey ~/.config/solana/id.json
 ## Update your Solana local wallet path in Anchor.toml
 
 ```
-[provider]
-cluster = "localnet"
-wallet = "~/.config/solana/id.json"
+[toolchain]
+
+[features]
+seeds = false
+skip-lint = false
 
 [programs.localnet]
-abc = "<program_id>"
-
-[workspace]
-members = ["programs/abc"]
+abc = "7mMu435prH2sgPhnT2UuYTCCMfQyxdA8XpwLX7sEx6L7"
 
 [registry]
-url = "https://anchor.projectserum.com"
+url = "https://api.apr.dev"
+
+[provider]
+cluster = "Localnet"
+wallet = "~/.config/solana/id.json"
 
 [scripts]
-test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/abc.ts"
+test = "bun run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
 
 ```
 
@@ -145,12 +154,12 @@ wallet = "/Users/YOUR_USER_NAME/.config/solana/id.json"
 
 ## Compile and build the Solana program
 
-`$ yarn build`
+`$ bun build`
 
 output:
 
 ```
-yarn run v1.22.17
+bun run v1.22.17
 $ anchor build
 BPF SDK: /home/user1234/.local/share/solana/install/releases/1.9.4/solana-release/bin/sdk/bpf
 cargo-build-bpf child: rustup toolchain list -v
@@ -170,7 +179,7 @@ Done in 0.73s.
 
 ## To Run Test
 
-`$ yarn test`
+`$ bun test`
 
 output:
 
@@ -194,48 +203,4 @@ anchor-lang = "0.20.1"
 anchor-spl = "0.20.1"
 ```
 
-Run `yarn test`
-
----
-
-## Invoking imported functions in Typescript problem
-
-See the test file at ./tests/abc.ts
-
-if you uncomment any of those lines below at line 133 and 134, and run the test again
-
-```
-  //log2('here log2');
-  //console.log('bn(3):', bn(3));
-```
-
-output:
-
-```
-TypeError: Unknown file extension ".ts" for /mnt/sda4/0Programming/1Solana/1anchorDemo2/tests/abc.ts
-    at new NodeError (node:internal/errors:371:5)
-    at Object.file: (node:internal/modules/esm/get_format:72:15)
-    at defaultGetFormat (node:internal/modules/esm/get_format:85:38)
-    at defaultLoad (node:internal/modules/esm/load:13:42)
-    at ESMLoader.load (node:internal/modules/esm/loader:303:26)
-    at ESMLoader.moduleProvider (node:internal/modules/esm/loader:230:58)
-    at new ModuleJob (node:internal/modules/esm/module_job:63:26)
-    at ESMLoader.getModuleJob (node:internal/modules/esm/loader:244:11)
-    at async Promise.all (index 0)
-    at ESMLoader.import (node:internal/modules/esm/loader:281:24)
-    at importModuleDynamicallyWrapper (node:internal/vm/module:437:15)
-    at formattedImport (/mnt/sda4/0Programming/1Solana/1anchorDemo2/node_modules/mocha/lib/nodejs/esm-utils.js:7:14)
-    at Object.exports.requireOrImport (/mnt/sda4/0Programming/1Solana/1anchorDemo2/node_modules/mocha/lib/nodejs/esm-utils.js:48:32)
-    at Object.exports.loadFilesAsync (/mnt/sda4/0Programming/1Solana/1anchorDemo2/node_modules/mocha/lib/nodejs/esm-utils.js:88:20)
-    at singleRun (/mnt/sda4/0Programming/1Solana/1anchorDemo2/node_modules/mocha/lib/cli/run-helpers.js:125:3)
-    at Object.exports.handler (/mnt/sda4/0Programming/1Solana/1anchorDemo2/node_modules/mocha/lib/cli/run.js:374:5)
-error Command failed with exit code 1.
-info Visit https://yarnpkg.com/en/docs/cli/run for documentation about this command.
-error Command failed with exit code 1.
-info Visit https://yarnpkg.com/en/docs/cli/run for documentation about this command.
-
-```
-
-So somehow, the test file cannot run any imported functions!!!???
-
-Please advise. thank you
+Run `bun test`
