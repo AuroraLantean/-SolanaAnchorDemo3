@@ -9,6 +9,7 @@
     "clear": "rm -rf .anchor target node_modules",
     "build": "anchor build",
     "test": "anchor test",
+    "test_skiplint": "anchor test --skip-lint",
     "testslv": "anchor test --skip-local-validator",
     "test1c": "anchor test-crunchyVsSmooth",
     "validator": "solana-test-validator",
@@ -46,6 +47,6 @@
     "typescript": "^5.2.2"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=20.9.0"
   }
 }

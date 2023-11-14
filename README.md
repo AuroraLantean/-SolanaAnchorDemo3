@@ -154,53 +154,24 @@ wallet = "/Users/YOUR_USER_NAME/.config/solana/id.json"
 
 ## Compile and build the Solana program
 
-`$ bun build`
-
-output:
-
-```
-bun run v1.22.17
-$ anchor build
-BPF SDK: /home/user1234/.local/share/solana/install/releases/1.9.4/solana-release/bin/sdk/bpf
-cargo-build-bpf child: rustup toolchain list -v
-cargo-build-bpf child: cargo +bpf build --target bpfel-unknown-unknown --release
-    Finished release [optimized] target(s) in 0.17s
-cargo-build-bpf child: /home/user1234/.local/share/solana/install/releases/1.9.4/solana-release/bin/sdk/bpf/dependencies/bpf-tools/llvm/bin/llvm-readelf --dyn-symbols /mnt/sda4/0Programming/1Solana/1anchorDemo2/target/deploy/abc.so
-
-To deploy this program:
-  $ solana program deploy /mnt/sda4/0Programming/1Solana/1anchorDemo2/target/deploy/abc.so
-The program address will default to this keypair (override with --program-id):
-  /mnt/sda4/0Programming/1Solana/1anchorDemo2/target/deploy/abc-keypair.json
-Done in 0.73s.
-
-```
+`$ anchor build`
 
 ---
 
 ## To Run Test
 
-`$ bun test`
-
-output:
-
-```
-  zero-copy
-    ✔ Is creates a zero copy account (411ms)
-    ✔ Updates a zero copy account field (411ms)
-
-  2 passing (826ms)
-
-```
+`$ anchor test`
 
 ---
 
 ## Anchor JS and Rust dependency problem
 
-update Anchor in Rust by going to project root/programs/abc/Cargo.toml, then change the two anchor dependencies from 0.19.0 to 0.20.1
+According to [Anchor Github page](https://github.com/coral-xyz/anchor), update Anchor in Rust by going to project root/programs/abc/Cargo.toml, then change the two anchor dependencies from 0.19.0 to 0.20.1
 
 ```
-anchor-lang = "0.20.1"
-anchor-spl = "0.20.1"
+anchor-lang = "0.29.0"
+anchor-spl = "0.29.0"
+anchor-client = "0.29.0"
 ```
 
-Run `bun test`
+Run command: `anchor test`

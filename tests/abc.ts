@@ -1,6 +1,7 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 import { Abc } from "../target/types/abc";
+import { Puppet } from "../target/types/puppet";
 const { SystemProgram } = anchor.web3;
 import assert from "assert";
 
@@ -14,38 +15,57 @@ describe("abc", () => {
   anchor.setProvider(provider);
 
   const program = anchor.workspace.Abc as Program<Abc>;
+  const puppet = anchor.workspace.Puppet as Program<Puppet>;
 
-  // The Account to create.
-  const myAccount = anchor.web3.Keypair.generate();
+  const counterSeed = anchor.utils.bytes.utf8.encode("my_pda");
+  let pdaPubk: anchor.web3.PublicKey;
+  before(async () => {
+    [pdaPubk] = anchor.web3.PublicKey.findProgramAddressSync(
+      [counterSeed],
+      program.programId
+    );
+  });
+
+  const puAccountKP = anchor.web3.Keypair.generate();
+  const myAccountKP = anchor.web3.Keypair.generate();
   const lg = console.log;
   const auth = provider.wallet.publicKey;
+  let [actionState] = anchor.web3.PublicKey.findProgramAddressSync(
+    [Buffer.from("action-state"), auth.toBuffer()],
+    program.programId
+  );
 
   it("initializes an account", async () => {
+    lg("step 98")
+    const txpuppet = await puppet.methods
+      .initialize()
+      .accounts({
+        puppet: puAccountKP.publicKey,
+        authority: provider.wallet.publicKey,
+        systemProgram: SystemProgram.programId,
+      })
+      .signers([puAccountKP])
+      .rpc();
+    lg("step 99. txpuppet:", txpuppet)
+
     lg("step 100")
-    // Make the new account and initialize it with the program.
-    // #region code-simplified
     const tx = await program.methods
       .initialize(bn(1234))
       .accounts({
-        myAccount: myAccount.publicKey,
+        myAccount: myAccountKP.publicKey,
         authority: auth,
         systemProgram: SystemProgram.programId,
       })
-      .signers([myAccount])
+      .signers([myAccountKP])
       .rpc();
-    // #endregion code-simplified
-    console.log("Your transaction signature:", tx);
+    lg("Your transaction signature:", tx);
 
-    // Fetch the newly created account from the cluster.
-    let account = await program.account.myAccount.fetch(myAccount.publicKey);
+    let account = await program.account.myAccount.fetch(myAccountKP.publicKey);
 
     lg("step 101")
-    // Check it's state was initialized.
     assert.ok(account.num.toNumber() === 1234);
     //assert.ok(account.num.eq(bn(1234)));
     assert.ok(account.authority.equals(auth));
-    // Store the account for the next test.
-    // #region update-test
     lg("step 104")
 
     // Invoke the update rpc.
@@ -53,34 +73,129 @@ describe("abc", () => {
     await program.methods
       .update(dataN1)
       .accounts({
-        myAccount: myAccount.publicKey,
+        myAccount: myAccountKP.publicKey,
         authority: auth,
       })
       .rpc();
     lg("step 105")
 
-    // Fetch the newly updated account.
-    account = await program.account.myAccount.fetch(myAccount.publicKey);
-
-    // Check it's state was mutated.
-    assert.ok(account.num.eq(dataN1));
-
-    lg("step 106")
-    // Increment num
-    await program.methods
-      .increment()
-      .accounts({
-        myAccount: myAccount.publicKey,
-        authority: auth,
-      })
-      .rpc();
-
-    account = await program.account.myAccount.fetch(
-      myAccount.publicKey
-    );
+    account = await program.account.myAccount.fetch(myAccountKP.publicKey);
 
     assert.ok(account.authority.equals(auth));
-    assert.ok(account.num.toNumber() == 4322);
+    assert.ok(account.num.eq(dataN1));
+    //assert.ok(account.num.toNumber() == 4322);
+
+    lg("step 106")
+    // Invoke CPI to the puppet.
+    await program.methods
+      .pullStrings(new anchor.BN(111))
+      .accounts({
+        puppetAccount: puAccountKP.publicKey,
+        puppetProgram: puppet.programId,
+      })
+      .rpc();
+    lg("step 108")
+    const puAccount = await puppet.account.puAccount.fetch(puAccountKP.publicKey);
+    assert.ok(puAccount.num.eq(new anchor.BN(111)));
   });
 
+  it("PDA", async () => {
+    lg("step 201 make_pda")
+    // Initialize the program's state struct.
+    await program.methods
+      .makeFixedPda()
+      .accounts({
+        myPda: pdaPubk,
+        authority: provider.wallet.publicKey,
+        systemProgram: anchor.web3.SystemProgram.programId,
+      })
+      .rpc();
+    let myPda = await program.account.myPda.fetch(pdaPubk);
+    assert.ok(myPda.count.eq(new anchor.BN(0)));
+
+    lg("step 202 increment")
+    await program.methods
+      .incrementFixedPda()
+      .accounts({
+        myPda: pdaPubk,
+        authority: provider.wallet.publicKey,
+      })
+      .rpc();
+    myPda = await program.account.myPda.fetch(pdaPubk);
+    assert.ok(myPda.count.eq(new anchor.BN(1)));
+  });
+
+  it("Test Make Dynamic PDA", async () => {
+    // Create instruction: set up the Solana accounts to be used
+    const createInstruction = await program.methods
+      .makeDynamicPda()
+      .accounts({
+        actionState,
+        auth,
+        systemProgram: anchor.web3.SystemProgram.programId,
+      })
+      .instruction();
+    const resetInstruction = await program.methods
+      .resetDynamicPda()
+      .accounts({
+        actionState,
+        auth,
+      })
+      .instruction();
+
+    // Array of instructions
+    const instructions: anchor.web3.TransactionInstruction[] = [
+      createInstruction,
+      resetInstruction,
+    ];
+
+    await createAndSendV0Tx(instructions);
+  });
+  async function createAndSendV0Tx(
+    txInstructions: anchor.web3.TransactionInstruction[]
+  ) {
+    // Step 1 - Fetch the latest blockhash
+    let latestBlockhash = await provider.connection.getLatestBlockhash(
+      "confirmed"
+    );
+    lg(
+      "   ✅ - Fetched latest blockhash. Last Valid Height:",
+      latestBlockhash.lastValidBlockHeight
+    );
+
+    // Step 2 - Generate Transaction Message
+    const messageV0 = new anchor.web3.TransactionMessage({
+      payerKey: auth,
+      recentBlockhash: latestBlockhash.blockhash,
+      instructions: txInstructions,
+    }).compileToV0Message();
+    lg("   ✅ - Compiled Transaction Message");
+    const transaction = new anchor.web3.VersionedTransaction(messageV0);
+
+    // Step 3 - Sign your transaction with the required `Signers`
+    provider.wallet.signTransaction(transaction);
+    lg("   ✅ - Transaction Signed");
+
+    // Step 4 - Send our v0 transaction to the cluster
+    const txid = await provider.connection.sendTransaction(transaction, {
+      maxRetries: 5,
+    });
+    lg("   ✅ - Transaction sent to network");
+
+    // Step 5 - Confirm Transaction
+    const confirmation = await provider.connection.confirmTransaction({
+      signature: txid,
+      blockhash: latestBlockhash.blockhash,
+      lastValidBlockHeight: latestBlockhash.lastValidBlockHeight,
+    });
+    if (confirmation.value.err) {
+      throw new Error(
+        `   ❌ - Transaction not confirmed.\nReason: ${confirmation.value.err}`
+      );
+    }
+
+    lg("🎉 Transaction Succesfully Confirmed!");
+    let result = await program.account.actionState.fetch(actionState);
+    lg("Robot action state details: ", result);
+  }
 });
