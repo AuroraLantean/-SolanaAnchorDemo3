@@ -5,6 +5,11 @@ import { Puppet } from "../target/types/puppet";
 const { SystemProgram } = anchor.web3;
 import assert from "assert";
 
+/* To add programs from Anchor repo or others: 
+# Copy their folders into "program" folder. Fix their Cargo.toml/anchor-lang, anchor-client dependencies to "version = 0.29.0"
+# Add the programId into root/Anchor.toml: [programs.localnet]. 
+# Add their test file into root/tests and change its extension to .ts
+ */
 const bn = (num: number) => new anchor.BN(num);
 
 describe("abc", () => {
@@ -41,7 +46,7 @@ describe("abc", () => {
       .initialize()
       .accounts({
         puppet: puAccountKP.publicKey,
-        authority: provider.wallet.publicKey,
+        authority: auth,
         systemProgram: SystemProgram.programId,
       })
       .signers([puAccountKP])
@@ -106,7 +111,7 @@ describe("abc", () => {
       .makeFixedPda()
       .accounts({
         myPda: pdaPubk,
-        authority: provider.wallet.publicKey,
+        authority: auth,
         systemProgram: anchor.web3.SystemProgram.programId,
       })
       .rpc();
@@ -118,7 +123,7 @@ describe("abc", () => {
       .incrementFixedPda()
       .accounts({
         myPda: pdaPubk,
-        authority: provider.wallet.publicKey,
+        authority: auth,
       })
       .rpc();
     myPda = await program.account.myPda.fetch(pdaPubk);
