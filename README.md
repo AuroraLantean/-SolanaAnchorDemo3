@@ -154,13 +154,30 @@ wallet = "/Users/YOUR_USER_NAME/.config/solana/id.json"
 
 ## Compile and build the Solana program
 
-`$ anchor build`
+In Cargo.toml, enter the Rust module/package you do not want to compile to save compilation time:
+
+```
+exclude = [
+  "programs/abc",
+  "programs/zero-copy",
+  "programs/zero-cpi",
+  "programs/puppet",
+]
+```
+
+Compile the Solana program: `$ anchor build`
 
 ---
 
 ## To Run Test
 
-`$ anchor test`
+In Anchor.toml/[scripts], enter the test you want to run:
+
+```
+test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/module_name.ts"
+```
+
+Compile, deploy to local testnet, and run test: `$ anchor test`
 
 ---
 

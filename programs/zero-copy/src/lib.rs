@@ -7,7 +7,7 @@
 
 use anchor_lang::prelude::*;
 
-declare_id!("3M1C9Z8941rrXfpeAiXyQLYxaJPg5GLiVXUZGPqRx26K");
+declare_id!("Fuuu2RxD8aYzLgTVtMqKhvEnBeWzJYs9s2RPYmytCbok");
 
 #[derive(Accounts)]
 pub struct CreateFoo<'info> {

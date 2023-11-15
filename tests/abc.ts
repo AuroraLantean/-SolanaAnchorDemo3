@@ -15,6 +15,7 @@ const bn = (num: number) => new anchor.BN(num);
 describe("abc", () => {
   // Use a local provider.
   const provider = anchor.AnchorProvider.local();
+  //const provider = anchor.AnchorProvider.env();//ANCHOR_PROVIDER_URL environment variable
 
   // Configure the client to use the local cluster.
   anchor.setProvider(provider);

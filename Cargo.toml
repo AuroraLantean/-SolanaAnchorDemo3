@@ -1,8 +1,12 @@
 [workspace]
-members = [
-    "programs/*"
+members = ["programs/*"]
+exclude = [
+  "programs/abc",
+  "programs/zero-copy",
+  "programs/zero-cpi",
+  "programs/puppet",
 ]
-
+# "programs/token-contract"
 [profile.release]
 overflow-checks = true
 lto = "fat"
