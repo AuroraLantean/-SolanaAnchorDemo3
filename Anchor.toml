@@ -11,6 +11,7 @@ puppet = "6V7YXxKMPsL1NeJFs5PgkkmTwi5Z5eHfxydi4UxDcBei"
 zero_cpi = "3KkGvkE9vY5FkccNkfFhqi9iyoo7QyAVkQ2n6TmmMW3Y"
 zero_copy = "Fuuu2RxD8aYzLgTVtMqKhvEnBeWzJYs9s2RPYmytCbok"
 token_contract = "AJFx3LkR7oyUE6uWXMTRa5QnR4TXqKkFskJkDzxh5gF5"
+solang = "6fiZW8e4d8XYo4XH2tLoFhxjYWpCfeF32XcAMa2KAZyN"
 
 [registry]
 url = "https://api.apr.dev"
@@ -20,11 +21,12 @@ cluster = "Localnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]
-test1 = "bun run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+test1 = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
 
-abc = "bun run ts-mocha -p ./tsconfig.json -t 1000000 tests/abc.ts"
+abc = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/abc.ts"
 
 zero_copy = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/zero-copy.ts"
 
-test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/token-contract.ts"
 token_contract = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/token-contract.ts"
+
+test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/solang.ts"

@@ -24,9 +24,10 @@ describe("abc", () => {
   const puppet = anchor.workspace.Puppet as Program<Puppet>;
 
   const counterSeed = anchor.utils.bytes.utf8.encode("my_pda");
-  let pdaPubk: anchor.web3.PublicKey;
+  let pdaPubkey: anchor.web3.PublicKey;
+  let bump: number;
   before(async () => {
-    [pdaPubk] = anchor.web3.PublicKey.findProgramAddressSync(
+    [pdaPubkey, bump] = anchor.web3.PublicKey.findProgramAddressSync(
       [counterSeed],
       program.programId
     );
@@ -36,11 +37,12 @@ describe("abc", () => {
   const myAccountKP = anchor.web3.Keypair.generate();
   const lg = console.log;
   const auth = provider.wallet.publicKey;
-  let [actionState] = anchor.web3.PublicKey.findProgramAddressSync(
+  [pdaPubkey, bump] = anchor.web3.PublicKey.findProgramAddressSync(
     [Buffer.from("action-state"), auth.toBuffer()],
     program.programId
   );
-
+  const actionStatePubkey = pdaPubkey;
+  console.log("Program ID:", program.programId.toBase58());
   it("initializes an account", async () => {
     lg("step 98")
     const txpuppet = await puppet.methods
@@ -111,23 +113,23 @@ describe("abc", () => {
     await program.methods
       .makeFixedPda()
       .accounts({
-        myPda: pdaPubk,
+        myPda: pdaPubkey,
         authority: auth,
         systemProgram: anchor.web3.SystemProgram.programId,
       })
       .rpc();
-    let myPda = await program.account.myPda.fetch(pdaPubk);
+    let myPda = await program.account.myPda.fetch(pdaPubkey);
     assert.ok(myPda.count.eq(new anchor.BN(0)));
 
     lg("step 202 increment")
     await program.methods
       .incrementFixedPda()
       .accounts({
-        myPda: pdaPubk,
+        myPda: pdaPubkey,
         authority: auth,
       })
       .rpc();
-    myPda = await program.account.myPda.fetch(pdaPubk);
+    myPda = await program.account.myPda.fetch(pdaPubkey);
     assert.ok(myPda.count.eq(new anchor.BN(1)));
   });
 
@@ -136,7 +138,7 @@ describe("abc", () => {
     const createInstruction = await program.methods
       .makeDynamicPda()
       .accounts({
-        actionState,
+        actionState: actionStatePubkey,
         auth,
         systemProgram: anchor.web3.SystemProgram.programId,
       })
@@ -144,7 +146,7 @@ describe("abc", () => {
     const resetInstruction = await program.methods
       .resetDynamicPda()
       .accounts({
-        actionState,
+        actionState: actionStatePubkey,
         auth,
       })
       .instruction();
@@ -201,7 +203,7 @@ describe("abc", () => {
     }
 
     lg("🎉 Transaction Succesfully Confirmed!");
-    let result = await program.account.actionState.fetch(actionState);
+    let result = await program.account.actionState.fetch(actionStatePubkey);
     lg("Robot action state details: ", result);
   }
 });

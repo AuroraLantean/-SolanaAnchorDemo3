@@ -2,6 +2,39 @@
 
 ---
 
+## Hyperledger Solang
+
+#### Breakpoint 2023 November: Solang: Running Solidity Natively on Solana
+
+https://www.youtube.com/watch?v=xF2f5WSlIgk
+
+#### Why Solang - Announcement from Solana: Hyperledger Solang opens Solana to Ethereum’s Solidity developers
+
+19 July 2023
+https://solana.com/news/solang-solana-solidity-evm
+https://solana.com/news/solang-solana-solidity-evm
+Hyperledger Solang opens Solana to Ethereum’s Solidity developers
+
+- Compatibility with Ethereum Solidity 0.8
+- Ability to call other Solana smart contracts
+- Supports Solana SPL tokens
+- Supports program derived addresses
+- Enables development with Anchor
+- Builds native Solana smart contracts
+- Access to native Solana builtin functionality
+
+#### What is Solang
+
+a new compiler to compile Solidity smart contracts for Solana and Polkadot!
+See the [docs](https://solang.readthedocs.io/en/latest/)
+Solang uses the llvm compiler framework to produce WebAssembly (WASM) or Solana SBF contract code. As result, the output is highly optimized, which saves you in gas costs or compute units.
+
+## Install Solang
+
+See [Steps here](https://solang.readthedocs.io/en/v0.3.3/installing.html)
+
+---
+
 ## Install PNPM as a NPM Package Manager
 
 See [PNPM installation](https://pnpm.io/installation)
@@ -11,8 +44,9 @@ Then install all NPM packages:
 
 ---
 
-## Install BUN as a fast JavaScript runtime, and it can run TypeScript natively.
+## Install Yarn or Bun to run JavaScript runtime
 
+See [Yarn installation](https://yarnpkg.com/getting-started/install)
 See [BUN installation](https://bun.sh/docs/installation)
 
 ---

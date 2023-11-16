@@ -4,6 +4,7 @@ examples
 *.js
 *.ts
 .env
+**/target
 
 dist/
 .idea/
