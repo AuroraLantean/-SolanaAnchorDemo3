@@ -3,14 +3,20 @@ import { Program } from "@coral-xyz/anchor";
 import { Abc } from "../target/types/abc";
 import { Puppet } from "../target/types/puppet";
 const { SystemProgram } = anchor.web3;
-import assert from "assert";
+import { assert } from "chai";
+//import assert from "assert";
+import { bn, lg, getPdaKB, zero } from "../utils";
 
 /* To add programs from Anchor repo or others: 
 # Copy their folders into "program" folder. Fix their Cargo.toml/anchor-lang, anchor-client dependencies to "version = 0.29.0"
+[package]
+name = "social-media"
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "social_media" ... this MUST match mod name in lib.rs
 # Add the programId into root/Anchor.toml: [programs.localnet]. 
 # Add their test file into root/tests and change its extension to .ts
  */
-const bn = (num: number) => new anchor.BN(num);
 
 describe("abc", () => {
   // Use a local provider.
@@ -35,14 +41,14 @@ describe("abc", () => {
 
   const puAccountKP = anchor.web3.Keypair.generate();
   const myAccountKP = anchor.web3.Keypair.generate();
-  const lg = console.log;
   const auth = provider.wallet.publicKey;
-  [pdaPubkey, bump] = anchor.web3.PublicKey.findProgramAddressSync(
-    [Buffer.from("action-state"), auth.toBuffer()],
-    program.programId
-  );
-  const actionStatePubkey = pdaPubkey;
-  console.log("Program ID:", program.programId.toBase58());
+
+  const { ukey: pda1Pubkey, bump: pda1bump } = getPdaKB("pda", auth, program.programId)
+  /*   const [pda1Pubkey, pda1bump] = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from("pda"), auth.toBuffer()],
+      program.programId
+    ); */
+  lg("Program ID:", program.programId.toString());
   it("initializes an account", async () => {
     lg("step 98")
     const txpuppet = await puppet.methods
@@ -71,9 +77,9 @@ describe("abc", () => {
     let account = await program.account.myAccount.fetch(myAccountKP.publicKey);
 
     lg("step 101")
-    assert.ok(account.num.toNumber() === 1234);
-    //assert.ok(account.num.eq(bn(1234)));
-    assert.ok(account.authority.equals(auth));
+    assert(account.num.toNumber() === 1234);
+    //assert(account.num.eq(bn(1234)));
+    assert(account.authority.equals(auth));
     lg("step 104")
 
     // Invoke the update rpc.
@@ -89,9 +95,9 @@ describe("abc", () => {
 
     account = await program.account.myAccount.fetch(myAccountKP.publicKey);
 
-    assert.ok(account.authority.equals(auth));
-    assert.ok(account.num.eq(dataN1));
-    //assert.ok(account.num.toNumber() == 4322);
+    assert(account.authority.equals(auth));
+    assert(account.num.eq(dataN1));
+    //assert(account.num.toNumber() == 4322);
 
     lg("step 106")
     // Invoke CPI to the puppet.
@@ -104,7 +110,7 @@ describe("abc", () => {
       .rpc();
     lg("step 108")
     const puAccount = await puppet.account.puAccount.fetch(puAccountKP.publicKey);
-    assert.ok(puAccount.num.eq(new anchor.BN(111)));
+    assert(puAccount.num.eq(bn(111)));
   });
 
   it("PDA", async () => {
@@ -119,7 +125,7 @@ describe("abc", () => {
       })
       .rpc();
     let myPda = await program.account.myPda.fetch(pdaPubkey);
-    assert.ok(myPda.count.eq(new anchor.BN(0)));
+    assert(myPda.count.eq(zero));
 
     lg("step 202 increment")
     await program.methods
@@ -130,23 +136,23 @@ describe("abc", () => {
       })
       .rpc();
     myPda = await program.account.myPda.fetch(pdaPubkey);
-    assert.ok(myPda.count.eq(new anchor.BN(1)));
+    assert(myPda.count.eq(bn(1)));
   });
 
   it("Test Make Dynamic PDA", async () => {
-    // Create instruction: set up the Solana accounts to be used
+    // See SocialMedia for a better way to test
     const createInstruction = await program.methods
       .makeDynamicPda()
       .accounts({
-        actionState: actionStatePubkey,
+        pda: pda1Pubkey,
         auth,
         systemProgram: anchor.web3.SystemProgram.programId,
       })
-      .instruction();
+      .instruction();// See SocialMedia for another way
     const resetInstruction = await program.methods
       .resetDynamicPda()
       .accounts({
-        actionState: actionStatePubkey,
+        pda: pda1Pubkey,
         auth,
       })
       .instruction();
@@ -203,7 +209,7 @@ describe("abc", () => {
     }
 
     lg("🎉 Transaction Succesfully Confirmed!");
-    let result = await program.account.actionState.fetch(actionStatePubkey);
+    let result = await program.account.pda1.fetch(pda1Pubkey);
     lg("Robot action state details: ", result);
   }
 });

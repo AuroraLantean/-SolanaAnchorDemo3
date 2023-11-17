@@ -50,14 +50,14 @@ pub mod abc {
         Ok(())
     }
     pub fn make_dynamic_pda(ctx: Context<MakeDynamicPda>) -> Result<()> {
-        let action_state = &mut ctx.accounts.action_state;
-        action_state.auth = *ctx.accounts.auth.key;
-        action_state.action = 100;
+        let pda = &mut ctx.accounts.pda;
+        pda.auth = *ctx.accounts.auth.key;
+        pda.action = 100;
         Ok(())
     }
     pub fn reset_dynamic_pda(ctx: Context<ResetDynamicPda>) -> Result<()> {
-        let action_state = &mut ctx.accounts.action_state;
-        action_state.action = 0;
+        let pda = &mut ctx.accounts.pda;
+        pda.action = 0;
         Ok(())
     }
 }
@@ -66,26 +66,26 @@ pub struct MakeDynamicPda<'info> {
     #[account(
         init,
         payer = auth,
-        space = 8 + ActionState::INIT_SPACE,
-        seeds = [b"action-state", auth.key().as_ref()],
+        space = 8 + Pda1::INIT_SPACE,
+        seeds = [b"pda", auth.key().as_ref()],
         bump
     )]
-    pub action_state: Account<'info, ActionState>,
+    pub pda: Account<'info, Pda1>,
     #[account(mut)]
     pub auth: Signer<'info>,
     pub system_program: Program<'info, System>,
 }
 #[account]
 #[derive(InitSpace)]
-pub struct ActionState {
+pub struct Pda1 {
     pub auth: Pubkey,
     pub action: u8,
 }
 #[derive(Accounts)]
 pub struct ResetDynamicPda<'info> {
-    // Only the auth on account action_state, should be able to change state
+    // Only the auth on account pda, should be able to change state
     #[account(mut, has_one = auth)]
-    pub action_state: Account<'info, ActionState>,
+    pub pda: Account<'info, Pda1>,
     // mut makes it changeble (mutable)
     #[account(mut)]
     pub auth: Signer<'info>,

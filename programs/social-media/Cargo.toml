@@ -1,0 +1,20 @@
+[package]
+name = "social-media"
+version = "0.1.0"
+description = "from Anchor"
+rust-version = "1.68.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "social_media"
+
+[features]
+no-entrypoint = []
+cpi = ["no-entrypoint"]
+no-idl = []
+no-log-ix-name = []
+default = []
+
+[dependencies]
+anchor-lang = "0.29.0"
