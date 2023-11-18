@@ -140,6 +140,6 @@ pub struct UserStake<'info> {
 
 #[error_code]
 pub enum ErrorCode {
-    #[msg("You are not authorized to perform this action.")]
+    #[msg("not authorized")]
     Unauthorized,
 }

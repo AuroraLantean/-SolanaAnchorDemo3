@@ -10,7 +10,7 @@ import {
 } from "@solana/spl-token";
 import { PublicKey, clusterApiUrl, Connection, Keypair, LAMPORTS_PER_SOL, Transaction, SYSVAR_RENT_PUBKEY, MAX_SEED_LENGTH, sendAndConfirmTransaction } from '@solana/web3.js';
 import { assert, use } from "chai";
-import { balc, bn, getPdaKB } from "../utils";
+import { balc, bn, getPdaKB, lam } from "../utils";
 //import assert from "assert";
 
 //TODO: add validation to check user credentials
@@ -33,26 +33,21 @@ describe("token-contract", () => {
   let ata: PublicKey;// AssociatedTokenAccount for anchor's workspace wallet
 
   it("transfer_lamports_to_pda", async () => {
-    //let token_airdrop = await program.provider.connection.requestAirdrop(mintKP.publicKey, 10 * LAMPORTS_PER_SOL)
-    //await program.provider.connection.confirmTransaction(token_airdrop)
+    const { ukey: userPdaUkey, bump: userPdaBump } = getPdaKB("userpda", auth, program.programId)
+    lg("ukey:", userPdaUkey.toBase58(), ', bump:', userPdaBump);
 
-    const { ukey: userPdaUkey, bump: userPdaBump } = getPdaKB("pdauser", auth, program.programId)
-
-    lg("101");
-    let amountSol = 1;
-    let amount = bn(amountSol * LAMPORTS_PER_SOL)
-    const tx = await program.methods
-      .transferLamportsToPda(amount)
+    let amountSol = 3;
+    let amount = lam(amountSol)
+    let tx = await program.methods
+      .transferLamportsToNewPda(amount)
       .accounts({
         userPda: userPdaUkey,
         auth,
         systemProgram: SystemProgram.programId,
       }).rpc();
-    lg("makeUserPda tx:", tx);
-    lg("102");
+    lg("transferLamportsToPda tx:", tx);
     //await program.provider.connection.sendTransaction(transaction, [mintKP])
-    lg("103");
-    const userPdaAcctInfo = await program.provider.connection.getAccountInfo(userPdaUkey)
+    let userPdaAcctInfo = await program.provider.connection.getAccountInfo(userPdaUkey)
     lg("userPdaAcctInfo:", userPdaAcctInfo)
     if (userPdaAcctInfo) {
       lg("userPdaUkey is generated. owner:", userPdaAcctInfo.owner.toString());
@@ -61,10 +56,39 @@ describe("token-contract", () => {
     //const userPdaBalcSol = await program.provider.connection.getBalance(userPdaUkey);
     lg('userPdaBalcSol:', userPdaAcctInfo.lamports)
 
-    lg("104");
-    const userPda = await program.account.userPda.fetch(userPdaUkey);
+    let userPda = await program.account.userPda.fetch(userPdaUkey);
     lg('deposit:', userPda.deposit.toNumber())
     assert(userPda.deposit.eq(amount));
+  });
+
+  it("transfer_lamports_from_pda", async () => {
+    const { ukey: userPdaUkey, bump: userPdaBump } = getPdaKB("userpda", auth, program.programId)
+    lg("ukey:", userPdaUkey.toBase58(), ', bump:', userPdaBump);
+
+    lg("201");
+    let amountSol = 1;
+    let amount = lam(amountSol)
+    const tx = await program.methods
+      .transferLamportsFromPda(amount, userPdaBump)
+      .accounts({
+        userPda: userPdaUkey,
+        auth,
+        systemProgram: SystemProgram.programId,
+      }).rpc();
+    lg("transferLamportsFromPda tx:", tx);
+
+    const userPdaAcctInfo = await program.provider.connection.getAccountInfo(userPdaUkey)
+    lg("userPdaAcctInfo:", userPdaAcctInfo)
+    if (userPdaAcctInfo) {
+      lg("userPda owner:", userPdaAcctInfo.owner.toString());
+    }
+    assert(userPdaAcctInfo.owner.equals(program.programId))
+    //const userPdaBalcSol = await program.provider.connection.getBalance(userPdaUkey);
+    lg('userPdaBalcSol:', userPdaAcctInfo.lamports)
+
+    const userPda = await program.account.userPda.fetch(userPdaUkey);
+    lg('deposit:', userPda.deposit.toNumber())
+    assert(userPda.deposit.eq(lam(2)));
   });
 
   it("Mint a token", async () => {

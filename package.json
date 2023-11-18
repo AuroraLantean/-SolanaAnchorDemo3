@@ -19,6 +19,7 @@
     "hash": "openssl sha256 ./target/deploy/abc.so",
     "listbackup": "ls archives/a*",
     "log1": "less abc/.anchor/program-logs/*.abc.log",
+    "log4": "less token-contract/.anchor/program-logs/*.token-contract.log",
     "network": "solana config get",
     "sollocal": "solana config set --url localhost",
     "soldev": "solana config set --url devnet",
