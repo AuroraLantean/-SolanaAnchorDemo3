@@ -54,6 +54,47 @@ pub mod token_contract {
         anchor_spl::token::transfer(cpi_ctx, amount.into())?;
         Ok(())
     }
+    pub fn transfer_lamports_to_pda(
+      ctx: Context<TransferLamportsToPda>,
+      bump: u8,
+      amount: u64,
+  ) -> Result<()> {
+      msg!("transfer_lamports_to_pda()... amount={:?}", amount);
+      let user_pda = &mut ctx.accounts.user_pda;
+      user_pda.deposit = amount;
+
+      /*    let auth = ctx.accounts.auth.key();
+      let bump1 = bump.to_le_bytes();
+      let inner = vec![auth.as_ref(), bump1.as_ref()];
+      let outer_sol = vec![inner.as_slice()];
+      let ix = anchor_lang::solana_program::system_instruction::transfer(&auth, &user_pda.key(), amount);
+      anchor_lang::solana_program::program::invoke_signed(
+          &ix,
+          &[
+              ctx.accounts.auth.to_account_info(),
+              user_pda.to_account_info(),
+          ],
+          outer_sol.as_slice(),
+      )?; */
+      Ok(())
+  }
+}
+//#[instruction(bump : u8)]
+#[derive(Accounts)]
+pub struct TransferLamportsToPda<'info> {
+    #[account(init, payer = auth, 
+      space = 8 + UserPda::INIT_SPACE, 
+      seeds = [b"pdauser".as_ref(), auth.key().as_ref()], bump )]
+    pub user_pda: Account<'info, UserPda>,
+    #[account(mut)]
+    pub auth: Signer<'info>,
+    pub system_program: Program<'info, System>,
+}
+#[account]
+#[derive(InitSpace)]
+pub struct UserPda {
+    pub user: Pubkey,
+    pub deposit: u64,
 }
 
 #[derive(Accounts)]

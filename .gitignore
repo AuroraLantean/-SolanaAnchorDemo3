@@ -3,6 +3,8 @@ examples
 *.sh
 *.js
 *.ts
+#./*.ts
+!tests/token-contract.ts
 .env
 **/target
 

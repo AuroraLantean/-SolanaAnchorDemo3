@@ -1,8 +1,9 @@
 [workspace]
 members = ["programs/*"]
 exclude = [
-  #"programs/abc",
-  "programs/token-contract",
+  "programs/abc",
+  #"programs/token-contract",
+  "programs/solang",
   "programs/zero-copy",
   "programs/zero-cpi",
   "programs/puppet",
