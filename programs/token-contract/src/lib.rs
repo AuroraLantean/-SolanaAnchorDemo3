@@ -1,4 +1,6 @@
 use anchor_lang::prelude::*;
+use anchor_lang::solana_program::system_instruction;
+use anchor_lang::solana_program::program::invoke_signed;
 use anchor_spl::token::{self, MintTo, Token, Transfer};
 //https://docs.rs/anchor-spl/latest/anchor_spl/token/index.html
 
@@ -56,26 +58,38 @@ pub mod token_contract {
     }
     pub fn transfer_lamports_to_pda(
       ctx: Context<TransferLamportsToPda>,
-      bump: u8,
       amount: u64,
   ) -> Result<()> {
       msg!("transfer_lamports_to_pda()... amount={:?}", amount);
       let user_pda = &mut ctx.accounts.user_pda;
       user_pda.deposit = amount;
 
-      /*    let auth = ctx.accounts.auth.key();
+      let from = &ctx.accounts.auth;
+      let instruction = system_instruction::transfer(from.key, &user_pda.key(), amount);
+
+      invoke_signed(
+          &instruction,
+          &[
+              from.to_account_info(),
+              user_pda.to_account_info(),
+              ctx.accounts.system_program.to_account_info(),
+          ],
+          &[],
+      )?;
+      
+      /*let auth = ctx.accounts.auth.key();
       let bump1 = bump.to_le_bytes();
       let inner = vec![auth.as_ref(), bump1.as_ref()];
       let outer_sol = vec![inner.as_slice()];
-      let ix = anchor_lang::solana_program::system_instruction::transfer(&auth, &user_pda.key(), amount);
-      anchor_lang::solana_program::program::invoke_signed(
-          &ix,
+      let instruction = system_instruction::transfer(&auth, &user_pda.key(), amount);
+      invoke_signed(
+          &instruction,
           &[
               ctx.accounts.auth.to_account_info(),
               user_pda.to_account_info(),
           ],
           outer_sol.as_slice(),
-      )?; */
+      )?;*/
       Ok(())
   }
 }

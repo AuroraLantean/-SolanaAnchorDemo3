@@ -42,7 +42,7 @@ describe("token-contract", () => {
     let amountSol = 1;
     let amount = bn(amountSol * LAMPORTS_PER_SOL)
     const tx = await program.methods
-      .transferLamportsToPda(userPdaBump, amount)
+      .transferLamportsToPda(amount)
       .accounts({
         userPda: userPdaUkey,
         auth,
@@ -58,6 +58,8 @@ describe("token-contract", () => {
       lg("userPdaUkey is generated. owner:", userPdaAcctInfo.owner.toString());
     }
     assert(userPdaAcctInfo.owner.equals(program.programId))
+    //const userPdaBalcSol = await program.provider.connection.getBalance(userPdaUkey);
+    lg('userPdaBalcSol:', userPdaAcctInfo.lamports)
 
     lg("104");
     const userPda = await program.account.userPda.fetch(userPdaUkey);
