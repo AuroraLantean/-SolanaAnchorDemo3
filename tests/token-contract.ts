@@ -10,7 +10,7 @@ import {
 } from "@solana/spl-token";
 import { PublicKey, clusterApiUrl, Connection, Keypair, LAMPORTS_PER_SOL, Transaction, SYSVAR_RENT_PUBKEY, MAX_SEED_LENGTH, sendAndConfirmTransaction } from '@solana/web3.js';
 import { assert, use } from "chai";
-import { accInfoB, bn, getPdaKB, getTokPdaKB, lam } from "../utils";
+import { accInfoB, bn, getPdaKB, getTokPdaKB, lam, zero } from "../utils";
 //import assert from "assert";
 
 //TODO: add validation to check user credentials
@@ -30,16 +30,43 @@ describe("token-contract", () => {
   const amountToMint = 1000;
   const amountToTransfer = 123;
   let amount = 0;
-  let ata1: PublicKey;// AssociatedTokenAccount for anchor's workspace wallet
+  let ataAuth: PublicKey;// AssociatedTokenAccount for anchor's workspace wallet
 
-  it("transfer_lamports_to_new_pda", async () => {
+  it("init_user_pda", async () => {
+    const { ukey: userPdaUkey, bump: userPdaBump } = getPdaKB("userpda", auth, program.programId)
+    lg("ukey:", userPdaUkey.toBase58(), ', bump:', userPdaBump);
+
+    let tx = await program.methods
+      .initUserPda()
+      .accounts({
+        userPda: userPdaUkey,
+        auth,
+        systemProgram: SystemProgram.programId,
+      }).rpc();
+    lg("transferLamportsToPda tx:", tx);
+    //await program.provider.connection.sendTransaction(transaction, [mintKP])
+    let userPdaAcctInfo = await program.provider.connection.getAccountInfo(userPdaUkey)
+    lg("userPdaAcctInfo:", userPdaAcctInfo)
+    if (userPdaAcctInfo) {
+      lg("userPdaUkey is generated. owner:", userPdaAcctInfo.owner.toString());
+    }
+    assert(userPdaAcctInfo.owner.equals(program.programId))
+    //const userPdaLam = await program.provider.connection.getBalance(userPdaUkey);
+    lg('userPdaLam:', userPdaAcctInfo.lamports)
+
+    let userPda = await program.account.userPda.fetch(userPdaUkey);
+    lg('deposit:', userPda.deposit.toNumber())
+    assert(userPda.deposit.eq(zero));
+  });
+
+  it("transfer_lamports_to_pda", async () => {
     const { ukey: userPdaUkey, bump: userPdaBump } = getPdaKB("userpda", auth, program.programId)
     lg("ukey:", userPdaUkey.toBase58(), ', bump:', userPdaBump);
 
     let amountSol = 3;
     let amount = lam(amountSol)
     let tx = await program.methods
-      .transferLamportsToNewPda(amount)
+      .transferLamportToPda(amount)
       .accounts({
         userPda: userPdaUkey,
         auth,
@@ -61,7 +88,7 @@ describe("token-contract", () => {
     assert(userPda.deposit.eq(amount));
   });
 
-  it("transfer_lamports_from_pda", async () => {
+  it("transfer_lamport_from_pda", async () => {
     const { ukey: userPdaUkey, bump: userPdaBump } = getPdaKB("userpda", auth, program.programId)
     lg("ukey:", userPdaUkey.toBase58(), ', bump:', userPdaBump);
 
@@ -69,7 +96,7 @@ describe("token-contract", () => {
     let amountSol = 1;
     let amount = lam(amountSol)
     const tx = await program.methods
-      .transferLamportsFromPda(amount, userPdaBump)
+      .transferLamportFromPda(amount, userPdaBump)
       .accounts({
         userPda: userPdaUkey,
         auth,
@@ -91,13 +118,13 @@ describe("token-contract", () => {
     assert(userPda.deposit.eq(lam(2)));
   });
 
-  it("Mint a token to PK ATA", async () => {
+  it("Mint a token to Auth ATA", async () => {
     const lamports: number = await program.provider.connection.getMinimumBalanceForRentExemption(
       MINT_SIZE
     );//to pay for rent
 
     // Get the AssociatedTokenAccount(ATA) for a token and the account that we want to own the ATA (but it might not existing on the SOL network yet)
-    ata1 = await getAssociatedTokenAddress(
+    ataAuth = await getAssociatedTokenAddress(
       mintKP.publicKey,
       auth
     );
@@ -118,7 +145,7 @@ describe("token-contract", () => {
       ),
       // make the ATA1 from mintKP and wallet
       createAssociatedTokenAccountInstruction(
-        auth, ata1, auth, mintKP.publicKey
+        auth, ataAuth, auth, mintKP.publicKey
       )
     );
 
@@ -132,50 +159,50 @@ describe("token-contract", () => {
     await program.methods.mintToken(amountToMint).accounts({
       mint: mintKP.publicKey,
       tokenProgram: TOKEN_PROGRAM_ID,
-      toAta: ata1,
+      toAta: ataAuth,
       auth: auth,
     }).rpc();
 
-    amount = await accInfoB(provider, ata1, 'ata1', 0)
+    amount = await accInfoB(provider, ataAuth, 'ataAuth', 0)
     assert.equal(amount, amountToMint);
   });
 
-  it("Transfer token to PK ATA", async () => {
-    const receiverKP: anchor.web3.Keypair = anchor.web3.Keypair.generate();
+  it("Transfer token to Alice ATA", async () => {
+    const aliceKP: anchor.web3.Keypair = anchor.web3.Keypair.generate();
 
-    const ata2 = await getAssociatedTokenAddress(
+    const ataAlice = await getAssociatedTokenAddress(
       mintKP.publicKey,
-      receiverKP.publicKey
+      aliceKP.publicKey
     );//(but might not exist yet)
 
     const mint_tx = new anchor.web3.Transaction().add(
       createAssociatedTokenAccountInstruction(
-        auth, ata2, receiverKP.publicKey, mintKP.publicKey
+        auth, ataAlice, aliceKP.publicKey, mintKP.publicKey
       )
     );// Make ATA2
     await provider.sendAndConfirm(mint_tx, []);
 
     await program.methods.transferToken(amountToTransfer).accounts({
       tokenProgram: TOKEN_PROGRAM_ID,
-      fromAta: ata1,
+      fromAta: ataAuth,
       auth: auth,
-      toAta: ata2,
+      toAta: ataAlice,
     }).rpc();
 
-    amount = await accInfoB(provider, ata1, 'ata1', 0)
+    amount = await accInfoB(provider, ataAuth, 'ataAuth', 0)
     assert.equal(amount, amountToMint - amountToTransfer);
 
-    amount = await accInfoB(provider, ata2, 'ata2', 0)
+    amount = await accInfoB(provider, ataAlice, 'ataAlice', 0)
     assert.equal(amount, amountToTransfer);
 
-    /*     const amt1 = await program.provider.connection.getTokenAccountBalance(ata1);
-        lg("ata1 balc:", amt1.value.uiAmount) */
+    /*     const amt1 = await program.provider.connection.getTokenAccountBalance(ataAuth);
+        lg("ataAuth balc:", amt1.value.uiAmount) */
   });
 
   it("init_token_pda", async () => {
     const { ukey: userPdaUkey, bump: userPdaBump } = getPdaKB("userpda", auth, program.programId)
     lg("ukey:", userPdaUkey.toBase58(), ', bump:', userPdaBump);
-    const { ukey: userTokpdaUkey, bump: userTokpdaBump } = getTokPdaKB(auth, ata1, program.programId)
+    const { ukey: userTokpdaUkey, bump: userTokpdaBump } = getTokPdaKB(auth, ataAuth, program.programId)
 
     let userTokpdaAcctInfo = await provider.connection.getParsedAccountInfo(userTokpdaUkey);
     lg("userTokpdaAcctInfo: ", userTokpdaAcctInfo)
@@ -189,7 +216,7 @@ describe("token-contract", () => {
           userTokpda: userTokpdaUkey,
           userPda: userPdaUkey,
           mint: mintKP.publicKey,
-          fromAta: ata1,
+          fromAta: ataAuth,
           auth,
           tokenProgram: TOKEN_PROGRAM_ID,
           systemProgram: SystemProgram.programId,
@@ -200,23 +227,23 @@ describe("token-contract", () => {
     }
   });
 
-  it("transfer_token_to_pda", async () => {
+  it("transfer_token_to_tokenPda", async () => {
     const { ukey: userPdaUkey, bump: userPdaBump } = getPdaKB("userpda", auth, program.programId)
     lg("ukey:", userPdaUkey.toBase58(), ', bump:', userPdaBump);
-    const { ukey: userTokpdaUkey, bump: userTokpdaBump } = getTokPdaKB(auth, ata1, program.programId)
+    const { ukey: userTokpdaUkey, bump: userTokpdaBump } = getTokPdaKB(auth, ataAuth, program.programId)
     lg("ukey:", userTokpdaUkey.toBase58(), ', bump:', userTokpdaBump);
-    let amountAta1Bf = await accInfoB(provider, ata1, 'ata1', 0)
+    let amountAta1Bf = await accInfoB(provider, ataAuth, 'ataAuth', 0)
     let amountTokBf = await accInfoB(provider, userTokpdaUkey, 'userTokpdaUkey', 0)
 
     let amountTok = 77;
     let amountTokBn = bn(amountTok)
     let tx = await program.methods
-      .transferTokenToPda(amountTokBn)
+      .transferTokenToTokenPda(amountTokBn)
       .accounts({
         userTokpda: userTokpdaUkey,
         mint: mintKP.publicKey,
         userPda: userPdaUkey,
-        fromAta: ata1,
+        fromAta: ataAuth,
         auth,
         tokenProgram: TOKEN_PROGRAM_ID,
         systemProgram: SystemProgram.programId,
@@ -231,7 +258,7 @@ describe("token-contract", () => {
       let amountTokM = await accInfoB(provider, userTokpdaUkey, 'userTokpdaUkey', 0)
       assert.equal(amountTokM, amountTokBf + amountTok);
 
-      let amountAta1Af = await accInfoB(provider, ata1, 'ata1', 0)
+      let amountAta1Af = await accInfoB(provider, ataAuth, 'ataAuth', 0)
       assert.equal(amountAta1Af, amountAta1Bf - amountTok);
     } else {
       lg("userTokpdaAcctInfo does not exist! Error!")

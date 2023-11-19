@@ -17,7 +17,7 @@ pub struct MintToken<'info> {
     pub auth: Signer<'info>,
 }
 #[derive(Accounts)]
-pub struct TransferTokenToPda<'info> {
+pub struct TransferTokenToTokenPda<'info> {
     #[account(mut)]
     pub user_tokpda: Account<'info, TokenAccount>,
     pub user_pda: Account<'info, UserPda>,
@@ -51,8 +51,8 @@ pub mod token_contract {
       msg!("init_token_pda initialised");
       Ok(())
     }
-    pub fn transfer_token_to_pda(
-      ctx: Context<TransferTokenToPda>,
+    pub fn transfer_token_to_token_pda(
+      ctx: Context<TransferTokenToTokenPda>,
       amount: u64,
     ) -> Result<()> {
         msg!("transfer_tokens_to_pda()... amount={:?}", amount);
@@ -108,13 +108,19 @@ pub mod token_contract {
         msg!("remaining tokens: {}, {}", ctx.accounts.from_ata.amount, ctx.accounts.to_ata.amount);
         Ok(())
     }
-    pub fn transfer_lamports_to_new_pda(
-      ctx: Context<TransferLamportsToNewPda>,
-      amount: u64,
-  ) -> Result<()> {
-      msg!("transfer_lamports_to_new_pda()... amount={:?}", amount);
+    pub fn init_user_pda(ctx: Context<InitUserPda>,
+    ) -> Result<()> {
+      msg!("init_user_pda()");
       let user_pda = &mut ctx.accounts.user_pda;
       user_pda.auth = *ctx.accounts.auth.key;
+      Ok(())
+    }
+    pub fn transfer_lamport_to_pda(
+      ctx: Context<TransferLamportToPda>,
+      amount: u64,
+    ) -> Result<()> {
+      msg!("transfer_lamport_to_pda()... amount={:?}", amount);
+      let user_pda = &mut ctx.accounts.user_pda;
       user_pda.deposit += amount;
 
       let from = &ctx.accounts.auth;
@@ -144,18 +150,19 @@ pub mod token_contract {
       )?;*/
       Ok(())
   }
-  pub fn transfer_lamports_from_pda(
-      ctx: Context<TransferLamportsFromPda>,
+
+  pub fn transfer_lamport_from_pda(
+      ctx: Context<TransferLamportFromPda>,
       amount: u64,
       bump: u8,
   ) -> Result<()> {
-      msg!("transfer_lamports_from_pda()... amount={:?}, bump={:?}", amount, bump);
+      msg!("transfer_lamport_from_pda()... amount={:?}, bump={:?}", amount, bump);
       let user_pda = &mut ctx.accounts.user_pda;
       if user_pda.deposit < amount {
         return Err(CustomError::InsufficientDeposit.into());
       }
       user_pda.deposit -= amount;
-      msg!("transfer_lamports_from_pda()...2");
+      msg!("transfer_lamport_from_pda()...2");
       
       let from_account = &user_pda.to_account_info();
       let to_account = &ctx.accounts.auth.to_account_info();
@@ -184,7 +191,7 @@ pub mod token_contract {
 }
 //#[instruction(bump : u8)]
 #[derive(Accounts)]
-pub struct TransferLamportsFromPda<'info> {
+pub struct TransferLamportFromPda<'info> {
     #[account(mut, has_one = auth)]
     pub user_pda: Account<'info, UserPda>,
     #[account(mut)]
@@ -192,10 +199,18 @@ pub struct TransferLamportsFromPda<'info> {
     pub system_program: Program<'info, System>,
 }
 #[derive(Accounts)]
-pub struct TransferLamportsToNewPda<'info> {
-    #[account(init, payer = auth, 
-      space = 8 + UserPda::INIT_SPACE, 
-      seeds = [b"userpda".as_ref(), auth.key().as_ref()], bump )]
+pub struct InitUserPda<'info> {
+  #[account(init, payer = auth, 
+    space = 8 + UserPda::INIT_SPACE, 
+    seeds = [b"userpda".as_ref(), auth.key().as_ref()], bump )]
+    pub user_pda: Account<'info, UserPda>,
+    #[account(mut)]
+    pub auth: Signer<'info>,
+    pub system_program: Program<'info, System>,
+}
+#[derive(Accounts)]
+pub struct TransferLamportToPda<'info> {
+    #[account(mut)]
     pub user_pda: Account<'info, UserPda>,
     #[account(mut)]
     pub auth: Signer<'info>,
