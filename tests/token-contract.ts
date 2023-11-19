@@ -10,7 +10,7 @@ import {
 } from "@solana/spl-token";
 import { PublicKey, clusterApiUrl, Connection, Keypair, LAMPORTS_PER_SOL, Transaction, SYSVAR_RENT_PUBKEY, MAX_SEED_LENGTH, sendAndConfirmTransaction } from '@solana/web3.js';
 import { assert, use } from "chai";
-import { balc, bn, getPdaKB, lam } from "../utils";
+import { accInfoB, bn, getPdaKB, lam } from "../utils";
 //import assert from "assert";
 
 //TODO: add validation to check user credentials
@@ -26,11 +26,11 @@ describe("token-contract", () => {
 
   const program = anchor.workspace.TokenContract as Program<TokenContract>;
 
-  const mintKP = anchor.web3.Keypair.generate();//represents the new token
+  const mintKP = anchor.web3.Keypair.generate();//like a new token address
   const amountToMint = 1000;
   const amountToTransfer = 123;
   let amount = 0;
-  let ata: PublicKey;// AssociatedTokenAccount for anchor's workspace wallet
+  let ata1: PublicKey;// AssociatedTokenAccount for anchor's workspace wallet
 
   it("transfer_lamports_to_pda", async () => {
     const { ukey: userPdaUkey, bump: userPdaBump } = getPdaKB("userpda", auth, program.programId)
@@ -53,8 +53,8 @@ describe("token-contract", () => {
       lg("userPdaUkey is generated. owner:", userPdaAcctInfo.owner.toString());
     }
     assert(userPdaAcctInfo.owner.equals(program.programId))
-    //const userPdaBalcSol = await program.provider.connection.getBalance(userPdaUkey);
-    lg('userPdaBalcSol:', userPdaAcctInfo.lamports)
+    //const userPdaLam = await program.provider.connection.getBalance(userPdaUkey);
+    lg('userPdaLam:', userPdaAcctInfo.lamports)
 
     let userPda = await program.account.userPda.fetch(userPdaUkey);
     lg('deposit:', userPda.deposit.toNumber())
@@ -83,8 +83,8 @@ describe("token-contract", () => {
       lg("userPda owner:", userPdaAcctInfo.owner.toString());
     }
     assert(userPdaAcctInfo.owner.equals(program.programId))
-    //const userPdaBalcSol = await program.provider.connection.getBalance(userPdaUkey);
-    lg('userPdaBalcSol:', userPdaAcctInfo.lamports)
+    //const userPdaLam = await program.provider.connection.getBalance(userPdaUkey);
+    lg('userPdaLam:', userPdaAcctInfo.lamports)
 
     const userPda = await program.account.userPda.fetch(userPdaUkey);
     lg('deposit:', userPda.deposit.toNumber())
@@ -97,14 +97,14 @@ describe("token-contract", () => {
     );//to pay for rent
 
     // Get the AssociatedTokenAccount(ATA) for a token and the account that we want to own the ATA (but it might not existing on the SOL network yet)
-    ata = await getAssociatedTokenAddress(
+    ata1 = await getAssociatedTokenAddress(
       mintKP.publicKey,
       auth
     );
 
     // Fires a list of instructions
     const mint_tx = new anchor.web3.Transaction().add(
-      // Use anchor to create an account from the mint key that we created
+      // make an account from the mint key
       anchor.web3.SystemProgram.createAccount({
         fromPubkey: auth,//transferring SOL from this
         newAccountPubkey: mintKP.publicKey,
@@ -112,67 +112,62 @@ describe("token-contract", () => {
         programId: TOKEN_PROGRAM_ID,//owner of the new account
         lamports,
       }),
-      // Fire a transaction to create our mint account that is controlled by our anchor wallet
+      // add a transaction to make our mint account that is controlled by our anchor wallet
       createInitializeMintInstruction(
         mintKP.publicKey, 0, auth, auth
       ),
-      // Create the ATA account that is associated with our mint on our anchor wallet
+      // make the ATA account that is associated with our mint on our anchor wallet
       createAssociatedTokenAccountInstruction(
-        auth, ata, auth, mintKP.publicKey
+        auth, ata1, auth, mintKP.publicKey
       )
     );
 
-    // sends and create the transaction
     const res = await provider.sendAndConfirm(mint_tx, [mintKP]);
     lg("res: ", res);
     lg("Mint key: ", mintKP.publicKey.toString());
     lg("Auth: ", auth.toString());
 
-    await balc(provider, mintKP.publicKey, 'mintKP.pubk', 1)
+    await accInfoB(provider, mintKP.publicKey, 'mintKP.pubk', 0)
 
     await program.methods.mintToken(amountToMint).accounts({
       mint: mintKP.publicKey,
       tokenProgram: TOKEN_PROGRAM_ID,
-      tokenAccount: ata,
-      authority: auth,
+      toAta: ata1,
+      auth: auth,
     }).rpc();
 
-    amount = await balc(provider, ata, 'ata', 1)
+    amount = await accInfoB(provider, ata1, 'ata1', 0)
     assert.equal(amount, amountToMint);
   });
 
   it("Transfer token", async () => {
-
     const receiverKP: anchor.web3.Keypair = anchor.web3.Keypair.generate();
-    // The ATA for a token on the to wallet (but might not exist yet)
-    const receiverAta = await getAssociatedTokenAddress(
+    // The ATA for a token(but might not exist yet)
+    const ata2 = await getAssociatedTokenAddress(
       mintKP.publicKey,
       receiverKP.publicKey
     );
-
-    // Fires a list of instructions
     const mint_tx = new anchor.web3.Transaction().add(
-      // Create the ATA account that is associated with our To wallet
       createAssociatedTokenAccountInstruction(
-        auth, receiverAta, receiverKP.publicKey, mintKP.publicKey
+        auth, ata2, receiverKP.publicKey, mintKP.publicKey
       )
-    );
-
-    // Sends and create the transaction
+    );// Make the Wallet ATA account
     await provider.sendAndConfirm(mint_tx, []);
 
-    // Executes our transfer smart contract 
     await program.methods.transferToken(amountToTransfer).accounts({
       tokenProgram: TOKEN_PROGRAM_ID,
-      from: ata,
-      fromAuthority: auth,
-      to: receiverAta,
+      fromAta: ata1,
+      auth: auth,
+      toAta: ata2,
     }).rpc();
 
-    amount = await balc(provider, ata, 'ata', 1)
+    amount = await accInfoB(provider, ata1, 'ata1', 0)
     assert.equal(amount, amountToMint - amountToTransfer);
 
-    amount = await balc(provider, receiverAta, 'receiverAta', 1)
+    amount = await accInfoB(provider, ata2, 'ata2', 0)
     assert.equal(amount, amountToTransfer);
+
+    /*     const amt1 = await program.provider.connection.getTokenAccountBalance(ata1);
+        lg("ata1 balc:", amt1.value.uiAmount) */
   });
 });
