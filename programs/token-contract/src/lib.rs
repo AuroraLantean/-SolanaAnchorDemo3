@@ -17,13 +17,13 @@ pub struct MintToken<'info> {
     pub auth: Signer<'info>,
 }
 #[derive(Accounts)]
-pub struct TransferTokenToTokenPda<'info> {
+pub struct TransferTokenWithTokenPda<'info> {
     #[account(mut)]
-    pub user_tokpda: Account<'info, TokenAccount>,
+    pub user_tpda: Account<'info, TokenAccount>,
     pub user_pda: Account<'info, UserPda>,
     pub mint: Account<'info, Mint>,
     #[account(mut)]
-    pub from_ata: Account<'info, TokenAccount>,
+    pub ata: Account<'info, TokenAccount>,
     #[account(mut)]
     pub auth: Signer<'info>,
     pub token_program: Program<'info, Token>,
@@ -34,7 +34,7 @@ pub struct InitTokenPda<'info> {
     #[account(init, payer = auth, 
       seeds = [auth.key().as_ref(), from_ata.key().as_ref()], bump, token::mint = mint,
       token::authority = user_pda, )]
-    pub user_tokpda: Account<'info, TokenAccount>,
+    pub user_tpda: Account<'info, TokenAccount>,
     pub user_pda: Account<'info, UserPda>,
     pub mint: Account<'info, Mint>,
     #[account(mut)]
@@ -47,20 +47,41 @@ pub struct InitTokenPda<'info> {
 #[program]
 pub mod token_contract {
     use super::*;
+    pub fn transfer_token_from_token_pda(ctx: Context<TransferTokenWithTokenPda>, amount:u64, user_pda_bump: u8) -> Result<()>
+    {
+      msg!("transfer_token_from_token_pda...");
+      let cpi_accounts = Transfer {
+        from: ctx.accounts.user_tpda.to_account_info(),
+        to: ctx.accounts.ata.to_account_info(),
+        authority: ctx.accounts.user_pda.to_account_info(),// user_pda!
+      };
+      msg!("transfer_tokens_to_new_pda()...2");
+      let seeds = &[b"userpda".as_ref(), ctx.accounts.auth.key.as_ref(), &[user_pda_bump], ];
+      let signer_seeds = &[&seeds[..]];
+      
+      msg!("transfer_token_from_token_pda()...3");
+      let cpi_program = ctx.accounts.token_program.to_account_info();
+      // Create the Context for our Transfer request
+      let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer_seeds);
+
+      msg!("transfer_token_from_token_pda()...4");
+      anchor_spl::token::transfer(cpi_ctx, amount.into())?;
+      Ok(())
+    }
     pub fn init_token_pda(_ctx: Context<InitTokenPda>) -> Result<()> {
       msg!("init_token_pda initialised");
       Ok(())
     }
     pub fn transfer_token_to_token_pda(
-      ctx: Context<TransferTokenToTokenPda>,
+      ctx: Context<TransferTokenWithTokenPda>,
       amount: u64,
     ) -> Result<()> {
         msg!("transfer_tokens_to_pda()... amount={:?}", amount);
         //let user_pda = &mut ctx.accounts.user_pda;
         // https://docs.rs/anchor-spl/latest/anchor_spl/token/struct.Transfer.html
         let cpi_accounts = Transfer {
-          from: ctx.accounts.from_ata.to_account_info(),
-          to: ctx.accounts.user_tokpda.to_account_info(),
+          from: ctx.accounts.ata.to_account_info(),
+          to: ctx.accounts.user_tpda.to_account_info(),
           authority: ctx.accounts.auth.to_account_info(),
       };//token::transfer(ctx.accounts.transfer_ctx(), amount)?;
       msg!("transfer_tokens_to_new_pda()...2");
@@ -135,19 +156,6 @@ pub mod token_contract {
           ],
           &[],
       )?;
-      /*let auth = ctx.accounts.auth.key();
-      let bump1 = bump.to_le_bytes();
-      let inner = vec![auth.as_ref(), bump1.as_ref()];
-      let outer_sol = vec![inner.as_slice()];
-      let instruction = system_instruction::transfer(&auth, &user_pda.key(), amount);
-      invoke_signed(
-          &instruction,
-          &[
-              ctx.accounts.auth.to_account_info(),
-              user_pda.to_account_info(),
-          ],
-          outer_sol.as_slice(),
-      )?;*/
       Ok(())
   }
 
