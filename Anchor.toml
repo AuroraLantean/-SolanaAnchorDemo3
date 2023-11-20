@@ -22,15 +22,18 @@ cluster = "Localnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]
-abc = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/abc.ts"
+test1 = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/abc.ts"
 
-zero_copy = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/zero-copy.ts"
+test2 = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/zero-copy.ts"
 
-test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/token-contract.ts"
-token_contract = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/token-contract.ts"
+test3 = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/social-media.ts"
 
-solong1 = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/solang.ts"
+test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/social-media.ts"
 
-social_media = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/social-media.ts"
+test4 = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/token-contract.ts"
 
-test1 = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+test5 = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/solang.ts"
+
+test6 = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/social-media.ts"
+
+testall = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"

@@ -28,7 +28,7 @@ pub struct TransferTokenWithTokenPda<'info> {
     pub auth: Signer<'info>,
     pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
-}
+}//constraint = my_account.mint == token_account.mint,has_one = owner
 #[derive(Accounts)]
 pub struct InitTokenPda<'info> {
     #[account(init, payer = auth, 
@@ -142,9 +142,14 @@ pub mod token_contract {
     ) -> Result<()> {
       msg!("transfer_lamport_to_pda()... amount={:?}", amount);
       let user_pda = &mut ctx.accounts.user_pda;
-      user_pda.deposit += amount;
+      user_pda.deposit += amount;//TODO: remove
 
       let from = &ctx.accounts.auth;
+      let lamports = user_pda.get_lamports();
+      msg!("lamports:{}", lamports);
+      if lamports < amount {
+        return Err(CustomError::InsufficientLamports.into());
+      }
       let instruction = system_instruction::transfer(from.key, &user_pda.key(), amount);
 
       invoke_signed(
@@ -165,21 +170,23 @@ pub mod token_contract {
       bump: u8,
   ) -> Result<()> {
       msg!("transfer_lamport_from_pda()... amount={:?}, bump={:?}", amount, bump);
-      let user_pda = &mut ctx.accounts.user_pda;
-      if user_pda.deposit < amount {
-        return Err(CustomError::InsufficientDeposit.into());
-      }
-      user_pda.deposit -= amount;
-      msg!("transfer_lamport_from_pda()...2");
-      
-      let from_account = &user_pda.to_account_info();
+      //let user_pda = &mut ctx.accounts.user_pda;
+      let lamports = ctx.accounts.user_pda.get_lamports();
+      msg!("lamports:{}", lamports);
+      if lamports < amount {
+        return Err(CustomError::InsufficientLamports.into());
+      }// Debit from_account and credit to_account
+      ctx.accounts.user_pda.sub_lamports(amount)?;
+      ctx.accounts.auth.add_lamports(amount)?;
+
+/*       let from_account = &user_pda.to_account_info();
       let to_account = &ctx.accounts.auth.to_account_info();
       if **from_account.try_borrow_lamports()? < amount {
         return Err(CustomError::InsufficientLamports.into());
-    }// Debit from_account and credit to_account
-    **from_account.try_borrow_mut_lamports()? -= amount;
-    **to_account.try_borrow_mut_lamports()? += amount;
-    Ok(())
+      }// Debit from_account and credit to_account
+      **from_account.try_borrow_mut_lamports()? -= amount;
+      **to_account.try_borrow_mut_lamports()? += amount;*/
+      Ok(())
   }
   /*    from pda
   let instruction = system_instruction::transfer(&user_pda.key(), auth.key, amount);

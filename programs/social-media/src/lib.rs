@@ -9,16 +9,23 @@ const USERNAME_LENGTH: usize = 100;
 pub mod social_media {
     use super::*;
 
-    pub fn make_user_pda(
-        ctx: Context<MakeUserPda>,
+    pub fn init_user_pda(
+        ctx: Context<InitUserPda>,
         _secretstr: String,
+        bump: u8,
         username: String,
     ) -> Result<()> {
         let user_pda = &mut ctx.accounts.user_pda;
-        user_pda.auth = *ctx.accounts.auth.key;
+        user_pda.user = *ctx.accounts.user.key;
+        user_pda.bump = bump;
+        let len = username.as_bytes().len();
+        if len == 0 || len > 20 {
+            return Err(CustomError::InvalidUsername.into());
+        }
         user_pda.username = username;
         Ok(())
     }
+    #[access_control(UserStake::ck_signer(&ctx, amount))]
     pub fn user_stake(ctx: Context<UserStake>, amount: u64) -> Result<()> {
         let user_pda = &mut ctx.accounts.user_pda;
         user_pda.staking_total += amount;
@@ -46,7 +53,7 @@ pub mod social_media {
         let stake_array = &mut ctx.accounts.stake_array.load_mut()?;
 
         if ctx.accounts.auth.to_account_info().key() != stake_array.auth.key() {
-            return Err(ErrorCode::Unauthorized.into());
+            return Err(CustomError::Unauthorized.into());
         }
         stake_array.stakes[pool_id as usize] = Stake {
             amount,
@@ -104,20 +111,30 @@ impl From<RpcStake> for Stake {
         }
     }
 }
+macro_rules! size {
+    ($name: ident, $size:expr) => {
+        impl $name {
+            pub const LEN: usize = $size;
+        }
+    };
+}
+#[account]
+pub struct UserAcct1 {}
+size!(UserAcct1, 32);
 
 #[derive(Accounts)]
 #[instruction(secretstr: String)]
-pub struct MakeUserPda<'info> {
+pub struct InitUserPda<'info> {
     #[account(
         init,
-        payer = auth,
+        payer = user,
         space = 8 + UserPda::INIT_SPACE,
-        seeds = [secretstr.as_bytes(), b"user".as_ref(), auth.key().as_ref()],
+        seeds = [secretstr.as_bytes(), b"user".as_ref(), user.key().as_ref()],
         bump
     )]
     pub user_pda: Account<'info, UserPda>,
     #[account(mut)]
-    pub auth: Signer<'info>,
+    pub user: Signer<'info>,
     pub system_program: Program<'info, System>,
 }
 #[account]
@@ -126,20 +143,54 @@ pub struct UserPda {
     #[max_len(USERNAME_LENGTH)]
     pub username: String,
     pub user_acct: Pubkey,
+    pub bump: u8,
     pub staking_total: u64,
     pub timestamp: u32,
-    pub auth: Pubkey,
+    pub user: Pubkey,
 }
 #[derive(Accounts)]
 pub struct UserStake<'info> {
-    #[account(mut, has_one = auth)]
+    #[account(mut, has_one = user)]
     pub user_pda: Account<'info, UserPda>,
     #[account(mut)]
-    pub auth: Signer<'info>,
+    pub user: Signer<'info>,
+}
+impl<'info> UserStake<'info> {
+    pub fn ck_signer(ctx: &Context<UserStake>, amount: u64) -> Result<()> {
+        let user_pda = &ctx.accounts.user_pda;
+        msg!("user_acct:{}", user_pda.user_acct);
+
+        /*         if user_pda.user_acct != *ctx.accounts.user.to_account_info().key {
+                    msg!("--------== InvalidUserAcct");
+                    return Err(CustomError::InvalidUserAcct.into());
+                }
+                let expected_signer = Pubkey::create_program_address(
+                    &[
+                        ctx.accounts.user.to_account_info().key.as_ref(),
+                        &[user_pda.bump],
+                    ],
+                    ctx.program_id,
+                )
+                .map_err(|_| CustomError::InvalidNonce)
+                .expect("map_err");
+
+        if &expected_signer != ctx.accounts.user.to_account_info().key {
+            return Err(CustomError::InvalidPgSigner.into());
+        }*/
+        Ok(())
+    }
 }
 
 #[error_code]
-pub enum ErrorCode {
+pub enum CustomError {
     #[msg("not authorized")]
     Unauthorized,
+    #[msg("invalid signer")]
+    InvalidPgSigner,
+    #[msg("invalid nonce")]
+    InvalidNonce,
+    #[msg("invalid user account")]
+    InvalidUserAcct,
+    #[msg("invalid user name")]
+    InvalidUsername,
 }

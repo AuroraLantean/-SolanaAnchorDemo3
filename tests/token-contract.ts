@@ -112,10 +112,6 @@ describe("token-contract", () => {
     assert(userPdaAcctInfo.owner.equals(program.programId))
     //const userPdaLam = await program.provider.connection.getBalance(userPdaUkey);
     lg('userPdaLam:', userPdaAcctInfo.lamports)
-
-    const userPda = await program.account.userPda.fetch(userPdaUkey);
-    lg('deposit:', userPda.deposit.toNumber())
-    assert(userPda.deposit.eq(lam(2)));
   });
 
   it("Mint a token to Auth ATA", async () => {

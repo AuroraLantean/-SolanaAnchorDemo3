@@ -4,7 +4,7 @@ examples
 *.js
 *.ts
 #./*.ts
-#!tests/token-contract.ts
+!tests/social-media.ts
 !tests/token-contract.ts
 .env
 **/target
