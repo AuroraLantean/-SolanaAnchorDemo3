@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::system_instruction;
 use anchor_lang::solana_program::program::invoke_signed;
-use anchor_spl::token::{self, MintTo, Token, Transfer, TokenAccount, Mint};
+use anchor_spl::token::{self, Mint, MintTo, Token, Transfer, TokenAccount};//    associated_token::AssociatedToken, metadata::{create_metadata_accounts_v3, CreateMetadataAccountsV3, Metadata},
 //https://docs.rs/anchor-spl/latest/anchor_spl/token/index.html
 
 declare_id!("AJFx3LkR7oyUE6uWXMTRa5QnR4TXqKkFskJkDzxh5gF5");
@@ -142,10 +142,10 @@ pub mod token_contract {
     ) -> Result<()> {
       msg!("transfer_lamport_to_pda()... amount={:?}", amount);
       let user_pda = &mut ctx.accounts.user_pda;
-      user_pda.deposit += amount;//TODO: remove
+      //user_pda.deposit += amount;
 
       let from = &ctx.accounts.auth;
-      let lamports = user_pda.get_lamports();
+      let lamports = from.get_lamports();
       msg!("lamports:{}", lamports);
       if lamports < amount {
         return Err(CustomError::InsufficientLamports.into());
@@ -188,21 +188,14 @@ pub mod token_contract {
       **to_account.try_borrow_mut_lamports()? += amount;*/
       Ok(())
   }
-  /*    from pda
+  /* from pda
   let instruction = system_instruction::transfer(&user_pda.key(), auth.key, amount);
       msg!("transfer_lamports_from_pda()...3");
       let seeds = &["userpda".as_bytes(), auth.key.as_ref(), &[bump]];
       msg!("transfer_lamports_from_pda()...4");
-      invoke_signed(
-          &instruction,
-          &[
-              user_pda.to_account_info(),
-              auth.to_account_info(),
-              //ctx.accounts.system_program.to_account_info(),
-          ],
+      invoke_signed(&instruction, &[user_pda.to_account_info(), auth.to_account_info(), to_account_info(), ],
           &[&seeds[..]],
-      )?;
-   */
+      )?; */
 }
 //#[instruction(bump : u8)]
 #[derive(Accounts)]

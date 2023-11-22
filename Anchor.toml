@@ -28,9 +28,9 @@ test2 = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/zero-copy.ts"
 
 test3 = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/social-media.ts"
 
-test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/social-media.ts"
+test4 = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/social-media.ts"
 
-test4 = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/token-contract.ts"
+test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/token-contract.ts"
 
 test5 = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/solang.ts"
 

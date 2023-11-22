@@ -5,7 +5,7 @@ import { Puppet } from "../target/types/puppet";
 const { SystemProgram } = anchor.web3;
 import { assert } from "chai";
 //import assert from "assert";
-import { bn, lg, getPdaKB, zero } from "../utils";
+import { bn, lg, getPdaKB, zero } from "./utils";
 
 /* To add programs from Anchor repo or others: 
 # Copy their folders into "program" folder. Fix their Cargo.toml/anchor-lang, anchor-client dependencies to "version = 0.29.0"

@@ -7,10 +7,11 @@ import {
   createAssociatedTokenAccountInstruction,
   getAssociatedTokenAddress,
   createInitializeMintInstruction,
+  createMintToCheckedInstruction,
 } from "@solana/spl-token";
 import { PublicKey, clusterApiUrl, Connection, Keypair, LAMPORTS_PER_SOL, Transaction, SYSVAR_RENT_PUBKEY, MAX_SEED_LENGTH, sendAndConfirmTransaction } from '@solana/web3.js';
 import { assert, use } from "chai";
-import { accInfoB, bn, getPdaKB, getTokPdaKB, lam, zero } from "../utils";
+import { accInfoB, bn, getPdaKB, getTokPdaKB, lam, zero } from "./utils";
 //import assert from "assert";
 
 //TODO: add validation to check user credentials
@@ -83,9 +84,9 @@ describe("token-contract", () => {
     //const userPdaLam = await program.provider.connection.getBalance(userPdaUkey);
     lg('userPdaLam:', userPdaAcctInfo.lamports)
 
-    let userPda = await program.account.userPda.fetch(userPdaUkey);
-    lg('deposit:', userPda.deposit.toNumber())
-    assert(userPda.deposit.eq(amt));
+    /*let userPda = await program.account.userPda.fetch(userPdaUkey);
+        lg('deposit:', userPda.deposit.toNumber())
+        assert(userPda.deposit.eq(amt)); */
   });
 
   it("transfer_lamport_from_pda", async () => {
@@ -114,7 +115,9 @@ describe("token-contract", () => {
     lg('userPdaLam:', userPdaAcctInfo.lamports)
   });
 
-  it("Mint a token to Auth ATA", async () => {
+  //TODO: export this mint function out to utils
+  //TODO: import getBalances2Acct from farm_test
+  it("Mint tokens from Auth KP to Auth ATA", async () => {
     const lamports: number = await program.provider.connection.getMinimumBalanceForRentExemption(
       MINT_SIZE
     );//to pay for rent
@@ -300,4 +303,12 @@ describe("token-contract", () => {
       assert.equal(1, 2);
     }
   });
-});
+
+  it("createTokenAccount", async () => {
+    //TODO: createTokenAccount
+    //const rewardMint = await createMint(provider, pgSigner);
+    //privider, authority
+    //const rewardUser = await createTokenAccount(provider, rewardMint, userAcct);
+    //lg("rewardUser:", rewardUser.toBase58());
+  })
+})

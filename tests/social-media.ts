@@ -3,7 +3,7 @@ import { Program } from "@coral-xyz/anchor";
 import { SocialMedia } from "../target/types/social_media";
 const { SystemProgram } = anchor.web3;
 import { assert } from "chai";
-import { bn, lg, getPda2KB, zero } from "../utils";
+import { bn, lg, getPda2KB, zero } from "./utils";
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 describe("initUserPda", () => {
   const provider = anchor.AnchorProvider.local();
@@ -150,6 +150,8 @@ describe("initUserPda", () => {
 
   it("initUserPda from KP", async () => {
     const user1KP = anchor.web3.Keypair.generate();
+    //await program.account.userAcct1.createInstruction(user1KP);
+
     const { ukey: userPdaUkey, bump: userPdaBump } = getPda2KB(secretstr, "user", user1KP.publicKey, program.programId);
     let token_airdrop = await provider.connection.requestAirdrop(user1KP.publicKey, 10 * LAMPORTS_PER_SOL);
     const latestBlockHash = await provider.connection.getLatestBlockhash();
@@ -172,4 +174,3 @@ describe("initUserPda", () => {
     lg("initUserPda tx:", tx);
   })
 });
-//await program.account.userAcct1.createInstruction(user1KP);
