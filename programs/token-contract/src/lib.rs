@@ -4,7 +4,7 @@ use anchor_lang::solana_program::program::invoke_signed;
 use anchor_spl::token::{self, Mint, MintTo, Token, Transfer, TokenAccount};//    associated_token::AssociatedToken, metadata::{create_metadata_accounts_v3, CreateMetadataAccountsV3, Metadata},
 //https://docs.rs/anchor-spl/latest/anchor_spl/token/index.html
 
-declare_id!("AJFx3LkR7oyUE6uWXMTRa5QnR4TXqKkFskJkDzxh5gF5");
+declare_id!("4bVCPUmNeVpLaCsSy5d5h2dbD3j25UatrgYzKQL12qpm");
 
 #[derive(Accounts)]
 pub struct MintToken<'info> {

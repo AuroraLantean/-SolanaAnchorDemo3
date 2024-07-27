@@ -44,9 +44,8 @@ Then install all NPM packages:
 
 ---
 
-## Install Yarn or Bun to run JavaScript runtime
+## Install Bun to run JavaScript runtime
 
-See [Yarn installation](https://yarnpkg.com/getting-started/install)
 See [BUN installation](https://bun.sh/docs/installation)
 
 ---
@@ -69,7 +68,7 @@ To update existing installed Solana to a newer version:
 
 `solana-install update`
 
-Confirm the installed Solana version 1.17.5:
+Confirm the installed Solana version 1.18.18:
 
 `$ solana --version`
 
@@ -208,10 +207,13 @@ Compile the Solana program: `$ anchor build`
 In Anchor.toml/[scripts], enter the test you want to run:
 
 ```
-test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/module_name.ts"
+test123 = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/module_name.ts"
 ```
 
-Compile, deploy to local testnet, and run test: `$ anchor test`
+Compile, deploy to local testnet, and run test: `anchor test`
+OR
+Run in terminal 1: `bun solnoder`
+And run in terminal 2: `bun deploy1`, then `bun test1`
 
 ---
 
@@ -220,8 +222,8 @@ Compile, deploy to local testnet, and run test: `$ anchor test`
 According to [Anchor Github page](https://github.com/coral-xyz/anchor), update Anchor in Rust by going to project root/programs/abc/Cargo.toml, then change the two anchor dependencies from 0.19.0 to 0.20.1
 
 ```
-anchor-lang = "0.29.0"
-anchor-spl = "0.29.0"
+anchor-lang = "0.30.1"
+anchor-spl = "0.30.1"
 anchor-client = "0.29.0"
 ```
 

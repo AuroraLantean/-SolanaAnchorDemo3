@@ -2,7 +2,6 @@
 name = "puppet"
 version = "0.1.0"
 description = ""
-rust-version = "1.68"
 edition = "2021"
 
 [lib]
@@ -10,8 +9,12 @@ crate-type = ["cdylib", "lib"]
 name = "puppet"
 
 [features]
-no-entrypoint = []
+default = []
 cpi = ["no-entrypoint"]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+idl-build = ["anchor-lang/idl-build", "anchor-spl/idl-build"]
 
 [dependencies]
-anchor-lang = "0.29.0"
+anchor-lang = "0.30.1"

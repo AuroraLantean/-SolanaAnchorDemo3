@@ -1,13 +1,16 @@
 [workspace]
 members = ["programs/*"]
 exclude = [
-  "programs/abc",
-  #"programs/token-contract",
-  "programs/solang",
-  "programs/zero-copy",
-  "programs/zero-cpi",
-  "programs/puppet",
+	"programs/abc",
+	#"programs/token-contract",
+	"programs/social-media",
+	"programs/solang",
+	"programs/zero-copy",
+	"programs/zero-cpi",
+	"programs/puppet",
 ]
+resolver = "2"
+
 [profile.release]
 overflow-checks = true
 lto = "fat"
